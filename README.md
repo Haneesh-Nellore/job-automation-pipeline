@@ -5,9 +5,10 @@
 **From 8 manual applications/day → 40+ automated applications/day**
 
 ---
+
 ## 🖼️ Workflow Preview
 
-![n8n Workflow](workflow_screenshot.png)
+![n8n Workflow](workflows/Screenshot%202026-06-23%20152437.png)
 
 ---
 
