@@ -1,0 +1,399 @@
+{
+  "name": "AI Job Application Automation Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [464, 320],
+      "id": "18c97c11-0075-48d2-88ba-58ed757c709c",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-544, 320],
+      "id": "01d7555a-d986-4509-bce5-9476227f1878",
+      "name": "Manual Trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "abb8a2ce-4dd4-4708-a269-a359cd8a1176",
+              "name": "LinkedIn search url",
+              "value": "https://www.linkedin.com/jobs/search/?position=1&pageNum=0",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-336, 320],
+      "id": "2c18b8e3-dc24-45e6-8c4c-5dcf206fe69f",
+      "name": "Job Search URL"
+    },
+    {
+      "parameters": {
+        "operation": "Run actor and get dataset",
+        "actorId": {
+          "__rl": true,
+          "value": "hKByXkMQaC5Qt9UMN",
+          "mode": "list",
+          "cachedResultName": "Linkedin Jobs Scraper (curious_coder/linkedin-jobs-scraper)"
+        },
+        "customBody": "={\n    \"count\": 80,\n    \"scrapeCompany\": true,\n    \"splitByLocation\": false,\n    \"urls\": [\n        \"https://www.linkedin.com/jobs/search/?keywords=Software+Engineer&location=United+States&geoId=103644278&f_TPR=r86400&f_JT=F&f_WT=1%2C2%2C3&f_E=2%2C3\",\n        \"https://www.linkedin.com/jobs/search/?keywords=Backend+Engineer&location=United+States&geoId=103644278&f_TPR=r86400&f_JT=F&f_WT=1%2C2%2C3&f_E=2%2C3\",\n        \"https://www.linkedin.com/jobs/search/?keywords=Java+Developer&location=United+States&geoId=103644278&f_TPR=r86400&f_JT=F&f_WT=1%2C2%2C3&f_E=2%2C3\",\n        \"https://www.linkedin.com/jobs/search/?keywords=Python+Developer&location=United+States&geoId=103644278&f_TPR=r86400&f_JT=F&f_WT=1%2C2%2C3&f_E=2%2C3\",\n        \"https://www.linkedin.com/jobs/search/?keywords=Full+Stack+Engineer&location=United+States&geoId=103644278&f_TPR=r86400&f_JT=F&f_WT=1%2C2%2C3&f_E=2%2C3\",\n        \"https://www.linkedin.com/jobs/search/?keywords=Platform+Engineer&location=United+States&geoId=103644278&f_TPR=r86400&f_JT=F&f_WT=1%2C2%2C3&f_E=2%2C3\",\n        \"https://www.linkedin.com/jobs/search/?keywords=Cloud+Engineer&location=United+States&geoId=103644278&f_TPR=r86400&f_JT=F&f_WT=1%2C2%2C3&f_E=2%2C3\",\n        \"https://www.linkedin.com/jobs/search/?keywords=DevOps+Engineer&location=United+States&geoId=103644278&f_TPR=r86400&f_JT=F&f_WT=1%2C2%2C3&f_E=2%2C3\"\n    ]\n}"
+      },
+      "type": "@apify/n8n-nodes-apify.apify",
+      "typeVersion": 1,
+      "position": [-32, 320],
+      "id": "28c430b3-27ee-4dbd-a245-a74d658bb321",
+      "name": "Scrape jobs",
+      "credentials": {
+        "apifyApi": {
+          "id": "YOUR_APIFY_CREDENTIAL_ID",
+          "name": "Your Apify Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "YOUR_MASTER_RESUME_GOOGLE_DOC_URL"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [944, 336],
+      "id": "738eee69-389f-417d-a18d-cad5bb04ecf1",
+      "name": "get a resume",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "YOUR_GOOGLE_DOCS_CREDENTIAL_ID",
+          "name": "Your Google Docs Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  try {\n    const text = item.json.content[0].text;\n    const cleaned = text.replace(/```json|```/g, '').trim();\n    const parsed = JSON.parse(cleaned);\n    const verdict = parsed.verdict === true || parsed.verdict === \"true\" ? \"true\" : \"false\";\n    results.push({\n      json: {\n        verdict: verdict,\n        sponsorshipMentioned: parsed.sponsorshipMentioned ?? 'Not Mentioned',\n        reason: parsed.reasonForVerdict ?? 'N/A'\n      }\n    });\n  } catch(e) {\n    results.push({\n      json: {\n        verdict: \"false\",\n        sponsorshipMentioned: \"Not Mentioned\",\n        reason: \"parse error\",\n        error: e.message\n      }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1456, 336],
+      "id": "acee7433-8fa0-432a-afe6-9386d62674d2",
+      "name": "parser"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "38c629c6-c8c4-4dfc-b59c-3a25a012c3be",
+              "leftValue": "={{ $('parser').item.json.verdict }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "62c7ad07-7e20-4571-bdcd-378350afe9a0",
+              "leftValue": "={{ $('parser').item.json.sponsorshipMentioned }}",
+              "rightValue": "No",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [1936, 336],
+      "id": "e2a847d6-baf3-44f3-a88f-e9efb75076fe",
+      "name": "Filter",
+      "alwaysOutputData": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-haiku-4-5-20251001",
+          "mode": "list",
+          "cachedResultName": "claude-haiku-4-5-20251001"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Customize this resume for the job. Integrate missing ATS keywords naturally. Keep human engineer tone. Cut unnecessary content from master resume. Keep only what's relevant.\n\nJob: {{ $('Loop Over Items').item.json.title }} at {{ $('Loop Over Items').item.json.companyName }}\n\nJob Description:\n{{ $('Loop Over Items').item.json.descriptionText }}\n\nMy Resume:\n{{ $('get a resume').first().json.content }}\n\nRules:\n- Rewrite bullets using context-setting style\n- Integrate top missing ATS keywords naturally\n- Quantified achievements where possible\n- Keep each bullet to 1-2 lines MAXIMUM\n- Select best 4 projects across all experiences\n- Include ONLY skills from job description (20-25 max)\n- Complete 2-page resume, never truncate\n- HTML only, no backticks, start with <html>\n- Update contact info to YOUR details"
+            }
+          ]
+        },
+        "options": {
+          "system": "You are a resume writer creating 2-page ATS-optimized resumes in HTML format.\n\nOutput rules:\n- HTML only, no backticks, first characters must be <html>\n- Target: 2 pages (1,600-1,800 words maximum)\n- Sections IN ORDER: Intro (name/contact), Summary, Professional Experience, Technical Skills, Education\n\nContent rules:\n- Select projects strategically based on job role\n- Total projects: 4-5 maximum across all experiences\n- Include ONLY skills mentioned in job (20-25 max)\n- Quantify achievements: throughput, latency, cost %, uptime %\n\nWriting style:\n- Keep each bullet to 1-2 lines MAXIMUM\n- Human tone, not corporate\n- Casual tech: 'wired up', 'shipped', 'optimized'\n- No em dashes, no buzzwords (leveraged, spearheaded, utilized)\n\nCSS Template:\n<html><head><style>\nbody{font-family:Calibri,sans-serif;font-size:11pt;color:#000;margin:1in;line-height:1.15;text-align:justify}\n.name{font-size:16pt;font-weight:bold;text-align:center;text-transform:uppercase;margin-bottom:2px}\n.contact{font-size:11pt;text-align:center;margin-bottom:6px}\nh2{font-size:11pt;font-weight:bold;text-transform:uppercase;margin-top:6px;margin-bottom:2px;padding-bottom:2px;border-bottom:2px solid #000}\nul{margin:1px 0 2px 0;padding-left:20px}\nli{font-size:11pt;margin-bottom:1px;text-align:justify;line-height:1.15}\n</style></head>",
+          "maxTokens": 2800
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [1776, -208],
+      "id": "d0bd6f4d-742c-47a2-bc12-6d0d3e01233a",
+      "name": "Customise Resume",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "anthropicApi": {
+          "id": "YOUR_ANTHROPIC_CREDENTIAL_ID",
+          "name": "Your Anthropic Account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "folderId": "=YOUR_GOOGLE_DRIVE_FOLDER_ID",
+        "title": "=CV - [Your Name] - {{ $('Loop Over Items').item.json.companyName }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [2384, -208],
+      "id": "ff222b40-aa67-41c9-9a21-1a67627c6174",
+      "name": "Create a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "YOUR_GOOGLE_DOCS_CREDENTIAL_ID",
+          "name": "Your Google Docs Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://www.googleapis.com/upload/drive/v3/files/{{ $('Create a document').item.json.id }}?uploadType=media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDocsOAuth2Api",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"text/html\"\n}",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "text/html",
+        "body": "={{ $('clean the output').item.json.resumeHtml }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [2688, -208],
+      "id": "64b2a342-f3b4-43d5-b02d-1f216da5092c",
+      "name": "HTTP Request",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "YOUR_GOOGLE_DOCS_CREDENTIAL_ID",
+          "name": "Your Google Docs Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'}) }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "Not Applied",
+            "Job Post Link": "={{ $('Loop Over Items').item.json.link }}",
+            "Job Title": "={{ $('Loop Over Items').item.json.title }}",
+            "Seniority Level": "={{ $('Loop Over Items').item.json.seniorityLevel }}",
+            "Posted At": "={{ new Date($('Loop Over Items').item.json.postedAt).toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'}) }}",
+            "Company Name": "={{ $('Loop Over Items').item.json.companyName }}",
+            "Company Website": "={{ $('Loop Over Items').item.json.companyLinkedinUrl }}",
+            "Salary": "={{ $('Loop Over Items').item.json.salary ?? 'Not Mentioned' }}",
+            "Description": "={{ $('Loop Over Items').item.json.descriptionText }}",
+            "No Applicants": "={{ $('Loop Over Items').item.json.applicantsCount }}",
+            "Resume URL": "=https://docs.google.com/document/d/{{ $('Create a document').item.json.id }}/edit",
+            "Application URL": "={{ $('Loop Over Items').item.json.applyUrl ?? 'Use LinkedIn Easy Apply' }}",
+            "Sponsorship": "={{ $('parser').item.json.sponsorshipMentioned }}",
+            "Verdict Reason": "={{ $('parser').item.json.reason ?? 'N/A' }}",
+            "Date Added": "={{ new Date().toLocaleDateString('en-US', {year: 'numeric', month: 'long', day: 'numeric'}) }}"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [3024, 432],
+      "id": "0ba684e1-2838-4a9b-be3d-0e525f2ac267",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Your Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "claude-haiku-4-5-20251001",
+          "mode": "list",
+          "cachedResultName": "claude-haiku-4-5-20251001"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=F1 OPT candidate, 4 years exp. Be VERY generous — maximize job matches.\n\nJob Description:\n{{ $('Loop Over Items').item.json.descriptionText }}\n\nReturn JSON only:\n{\"verdict\": \"true or false\", \"sponsorshipMentioned\": \"Yes / No / Not Mentioned\", \"reasonForVerdict\": \"one sentence\"}\nNo backticks, no markdown."
+            }
+          ]
+        },
+        "options": {
+          "system": "You are a technical recruiter. Return raw JSON only.\n\nREJECT (verdict false):\n- Job outside USA\n- Requires US citizenship, green card, permanent residency, clearance\n- Senior, Staff, Principal, Lead, Director, VP roles\n- PhD required\n- Internship or intern roles\n- Empty/too short description\n- 7+ years required\n\nPASS (verdict true):\n- Entry, Associate, Mid-level, Junior, 0-6 years roles\n- Remote/hybrid/onsite all fine\n- No sponsorship mention = fine\n- Transferable skills count heavily\n- If role mentions ANY: Java, Python, microservices, AWS, Azure, Kubernetes, REST APIs → AUTO PASS\n- When in doubt, PASS\n\nSPONSORSHIP:\nYes = H1B/OPT/CPT/F1/will sponsor\nNo = citizenship/GC/clearance required\nNot Mentioned = everything else",
+          "maxTokens": 1024
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.anthropic",
+      "typeVersion": 1,
+      "position": [1136, 336],
+      "id": "71a61637-245f-4ff3-ab5e-de56ed4d6dbc",
+      "name": "Check Relevance",
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "anthropicApi": {
+          "id": "YOUR_ANTHROPIC_CREDENTIAL_ID",
+          "name": "Your Anthropic Account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  try {\n    let html = '';\n    if (item.json.content && Array.isArray(item.json.content)) {\n      html = item.json.content[0].text;\n    } else if (item.json.text) {\n      html = item.json.text;\n    }\n    const htmlStart = html.indexOf('<html');\n    if (htmlStart !== -1) html = html.substring(htmlStart);\n    results.push({ json: { resumeHtml: html } });\n  } catch(e) {\n    results.push({\n      json: {\n        resumeHtml: '<html><body>Error generating resume</body></html>',\n        error: e.message\n      }\n    });\n  }\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2144, -208],
+      "id": "82270f10-c5ab-4dde-948b-ab62562271c6",
+      "name": "clean the output"
+    },
+    {
+      "parameters": {
+        "jsCode": "const scrapedJobs = $input.all();\n\nconst staffingCompanies = [\n  'infosys', 'wipro', 'tcs', 'tata consultancy', 'cognizant',\n  'hcl', 'capgemini', 'hexaware', 'mastech', 'tekystems',\n  'apex systems', 'insight global', 'robert half', 'randstad',\n  'beaconfire', 'beacon fire', 'beacon hill', 'kforce', 'modis',\n  'stefanini', 'luxoft', 'epam', 'globallogic', 'mphasis',\n  'persistent systems', 'ltimindtree', 'mindtree', 'igate',\n  'cyient', 'niit', 'syntel', 'revature', 'unison',\n  'tech mahindra', 'birlasoft', 'zensar', 'sonata',\n  'coforge', 'intelliswift', 'collabera'\n];\n\nconst seen = new Set();\nconst newJobs = scrapedJobs.filter(item => {\n  const link = item.json.link;\n  const company = (item.json.companyName || '').toLowerCase();\n  if (!link) return false;\n  if (seen.has(link)) return false;\n  if (staffingCompanies.some(bad => company.includes(bad))) return false;\n  seen.add(link);\n  return true;\n});\n\nconsole.log(`Total scraped: ${scrapedJobs.length}`);\nconsole.log(`New unique jobs: ${newJobs.length}`);\n\nreturn newJobs.map(item => ({ json: item.json }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [192, 320],
+      "id": "65c8a142-ef48-494b-b02f-88cee3134180",
+      "name": "Remove Duplicates"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "title": "={{ new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [2976, -208],
+      "id": "b7c0be2a-fabc-4215-a868-303f2609a9b4",
+      "name": "Create sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Your Google Sheets Account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Loop Over Items": {
+      "main": [[], [{"node": "get a resume", "type": "main", "index": 0}]]
+    },
+    "Manual Trigger": {
+      "main": [[{"node": "Job Search URL", "type": "main", "index": 0}]]
+    },
+    "Job Search URL": {
+      "main": [[{"node": "Scrape jobs", "type": "main", "index": 0}]]
+    },
+    "Scrape jobs": {
+      "main": [[{"node": "Remove Duplicates", "type": "main", "index": 0}]]
+    },
+    "Remove Duplicates": {
+      "main": [[{"node": "Loop Over Items", "type": "main", "index": 0}]]
+    },
+    "get a resume": {
+      "main": [[{"node": "Check Relevance", "type": "main", "index": 0}]]
+    },
+    "Check Relevance": {
+      "main": [[{"node": "parser", "type": "main", "index": 0}]]
+    },
+    "parser": {
+      "main": [[{"node": "Filter", "type": "main", "index": 0}]]
+    },
+    "Filter": {
+      "main": [[{"node": "Customise Resume", "type": "main", "index": 0}]]
+    },
+    "Customise Resume": {
+      "main": [[{"node": "clean the output", "type": "main", "index": 0}]]
+    },
+    "clean the output": {
+      "main": [[{"node": "Create a document", "type": "main", "index": 0}]]
+    },
+    "Create a document": {
+      "main": [[{"node": "HTTP Request", "type": "main", "index": 0}]]
+    },
+    "HTTP Request": {
+      "main": [[{"node": "Create sheet", "type": "main", "index": 0}]]
+    },
+    "Create sheet": {
+      "main": [[{"node": "Append row in sheet", "type": "main", "index": 0}]]
+    },
+    "Append row in sheet": {
+      "main": [[{"node": "Loop Over Items", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
