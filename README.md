@@ -77,13 +77,37 @@ Loop Over Items (Batch Size = 1)
 
 ### Setup
 
-**1. Clone this repo**
+**1. Self-host n8n for FREE using Docker**
+
+> 💡 This is how to run n8n completely free — no subscription needed. Just Docker on your local machine.
+
+Install Docker: [docker.com/get-started](https://www.docker.com/get-started)
+
+Then run this single command:
+```bash
+docker run -it --rm \
+  --name n8n \
+  -p 5678:5678 \
+  -v ~/.n8n:/home/node/.n8n \
+  n8nio/n8n
+```
+
+Then open your browser and go to:
+```
+http://localhost:5678
+```
+
+That's it — n8n is running locally for free! 🎉
+
+> **Why self-host?** n8n cloud costs $20+/month. Running it in Docker on your own machine is 100% free. Your workflows run whenever your computer is on.
+
+**2. Clone this repo**
 ```bash
 git clone https://github.com/Haneesh-Nellore/job-automation-pipeline.git
 cd job-automation-pipeline
 ```
 
-**2. Set up Google Workspace**
+**3. Set up Google Workspace**
 - Create a Google Sheet for tracking (note the Sheet ID)
 - Create a Google Drive folder for resumes (note the Folder ID)
 - Create a master resume Google Doc (note the Doc ID)
